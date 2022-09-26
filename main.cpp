@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         }
 
         // convert IPv4 and IPv6 addresses from binary to text form
-        inet_ntop(p->ai_family, addr, ipStr, sizeof(ipStr));
+        // inet_ntop(p->ai_family, addr, ipStr, sizeof(ipStr));
         std::cout << "(" << numOfAddr << ") " << ipVer << " : " << ipStr
                   << std::endl;
     }
