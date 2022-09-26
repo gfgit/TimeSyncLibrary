@@ -111,8 +111,15 @@ int main(int argc, char *argv[])
     } while (!madeChoice);
 
 
-
+    // Apply user choice
     p = res;
+    for(int i = 1; p && i < choice; i++)
+    {
+        p = p->ai_next;
+    }
+
+    if(!p)
+        return -3;
 
     // let's create a new socket, socketFD is returned as descriptor
     // man socket for more information
