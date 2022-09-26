@@ -10,3 +10,6 @@ set(PROGRAM_SOURCES
 
 add_executable(TimeSyncLibrary
     ${PROGRAM_SOURCES})
+
+target_link_libraries(TimeSyncLibrary
+    Ws2_32.lib)
