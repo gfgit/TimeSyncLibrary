@@ -1,4 +1,4 @@
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #define _WIN32_WINNT 0x0600
 #endif
 
@@ -7,7 +7,7 @@
 #include <string>
 
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <unistd.h>    // close()

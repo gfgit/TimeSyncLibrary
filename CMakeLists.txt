@@ -11,5 +11,7 @@ set(PROGRAM_SOURCES
 add_executable(TimeSyncLibrary
     ${PROGRAM_SOURCES})
 
+if(WIN32)
 target_link_libraries(TimeSyncLibrary
     Ws2_32.lib)
+endif()
