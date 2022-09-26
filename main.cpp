@@ -24,6 +24,12 @@
 
 int main(int argc, char *argv[])
 {
+#if defined(WIN32) || defined(_WIN32)
+    WSADATA wdata;
+    if(WSAStartup(MAKEWORD(2, 2), &wdata) != 0)
+        return 1;
+#endif
+
     // Let's check if port number is supplied or not..
     if (argc != 2) {
         std::cerr << "Run program as 'program <port>'\n";
@@ -171,6 +177,10 @@ int main(int argc, char *argv[])
 
     close(sockFD);
     freeaddrinfo(res);
+
+#if defined(WIN32) || defined(_WIN32)
+    WSACleanup();
+#endif
 
     return 0;
 }
