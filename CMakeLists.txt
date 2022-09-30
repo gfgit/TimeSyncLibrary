@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROGRAM_SOURCES
-    main.cpp)
+    main.cpp
+    
+    src/socketutil.h
+    src/socketutil.cpp)
 
 add_executable(TimeSyncLibrary
     ${PROGRAM_SOURCES})

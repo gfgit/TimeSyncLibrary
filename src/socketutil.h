@@ -19,7 +19,7 @@ namespace TimeSyncLibrary{
     {
     public:
         Socket();
-        ~Socket();
+        virtual ~Socket();
 
         int close();
         int connectTo(sockaddr *serverAddr, int len);
@@ -27,10 +27,17 @@ namespace TimeSyncLibrary{
         int read(char *buf, int len);
         int write(const char *buf, int len);
 
-    private:
+    protected:
         int sockFd;
+    };
 
-    
+    class Server: public Socket
+    {
+    public:
+        Server();
+        virtual ~Server();
+
+        int listen(sockaddr *serverAddr, int len, int backLog);
     };
 
     std::string IpAddressToString(sockaddr *addr, int addr_len);

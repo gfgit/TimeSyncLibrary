@@ -90,6 +90,9 @@ TimeSyncLibrary::Socket::~Socket()
 
 int TimeSyncLibrary::Socket::close()
 {
+    if(sockFd == -1)
+        return -1;
+
 #if defined(WIN32) || defined(_WIN32)
     int rc = ::closesocket(sockFd);
 #else
@@ -104,7 +107,7 @@ int TimeSyncLibrary::Socket::connectTo(sockaddr *serverAddr, int len)
 {
     close();
 
-    sockFd = socket(serverAddr->sa_family, SOCK_STREAM, 0);
+    sockFd = ::socket(serverAddr->sa_family, SOCK_STREAM, 0);
     if(sockFd == -1)
         return -1;
 
@@ -119,4 +122,28 @@ int TimeSyncLibrary::Socket::read(char *buf, int len)
 int TimeSyncLibrary::Socket::write(const char *buf, int len)
 {
     return ::send(sockFd, buf, len, 0);
+}
+
+TimeSyncLibrary::Server::Server():
+    Socket()
+{
+
+}
+
+TimeSyncLibrary::Server::~Server()
+{
+    close();
+}
+
+int TimeSyncLibrary::Server::listen(sockaddr *serverAddr, int len, int backLog)
+{
+    close();
+
+    sockFd = ::socket(serverAddr->sa_family, SOCK_STREAM, 0);
+    if(sockFd == -1)
+        return -1;
+
+    ::bind(sockFd, serverAddr, len);
+
+    return ::listen(sockFd, backLog);
 }
