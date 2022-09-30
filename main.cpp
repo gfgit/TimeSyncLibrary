@@ -29,6 +29,72 @@ int myCloseSocket(int sockFD)
 #endif
 }
 
+std::string IpAddressToString(sockaddr *addr, int addr_len)
+{
+#if (defined(WIN32) || defined(_WIN32))
+    std::string buf(INET6_ADDRSTRLEN, ' ');
+
+    DWORD requiredLength = buf.length();
+    char *bufPtr = &buf.at(0);
+    int err = WSAAddressToStringA(addr, addr_len, nullptr, bufPtr, &requiredLength);
+    if(err == WSAEFAULT)
+    {
+        //Retry with bigger buffer
+        buf.resize(requiredLength, ' ');
+        bufPtr = &buf.at(0);
+        err = WSAAddressToStringA(addr, addr_len, nullptr, bufPtr, &requiredLength);
+    }
+
+    if(err)
+    {
+        std::cerr << "Socket name error" << std::endl;
+    }
+
+    buf.resize(requiredLength);
+    return buf;
+#else
+    // ipv6 length makes sure both ipv4/6 addresses can be stored in this variable
+    char ipStr[INET6_ADDRSTRLEN + 6];
+
+    void *addr_ptr;
+    u_short sin_port;
+
+    // if address is ipv4 address
+    if (addr->sa_family == AF_INET)
+    {
+        sockaddr_in *ipv4 = reinterpret_cast<sockaddr_in *>(addr);
+        addr_ptr = &(ipv4->sin_addr);
+        sin_port = ipv4->sin_port;
+    }
+    else if(addr->sa_family == AF_INET6)
+    {
+        sockaddr_in6 *ipv6 = reinterpret_cast<sockaddr_in6 *>(addr);
+        addr_ptr = &(ipv6->sin6_addr);
+        sin_port = ipv6->sin6_port;
+    }
+    else
+    {
+        //Unsupperted
+        return {};
+    }
+
+    inet_ntop(addr->sa_family, addr_ptr, ipStr, INET6_ADDRSTRLEN);
+
+    //Append :port
+    int real_port = ntohs(sin_port); //Convert to host byte order
+
+    int len = strlen(ipStr);
+    ipStr[len] = ':';
+    int num_len = snprintf(ipStr + len + 1, 5, "%d", real_port);
+    if(num_len <= 5)
+    {
+        ipStr[len + 1 + num_len] = '\0';
+    }
+
+    return std::string(ipStr);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
 #if defined(WIN32) || defined(_WIN32)
@@ -66,35 +132,33 @@ int main(int argc, char *argv[])
     std::cout << "Detecting addresses" << std::endl;
 
     unsigned int numOfAddr = 0;
-    char ipStr[INET6_ADDRSTRLEN];    // ipv6 length makes sure both ipv4/6 addresses can be stored in this variable
-
 
     // Now since getaddrinfo() has given us a list of addresses
     // we're going to iterate over them and ask user to choose one
     // address for program to bind to
-    for (p = res; p != NULL; p = p->ai_next) {
-        void *addr;
+    for (p = res; p != NULL; p = p->ai_next)
+    {
         std::string ipVer;
 
         // if address is ipv4 address
-        if (p->ai_family == AF_INET) {
-            ipVer             = "IPv4";
-            sockaddr_in *ipv4 = reinterpret_cast<sockaddr_in *>(p->ai_addr);
-            addr              = &(ipv4->sin_addr);
-            ++numOfAddr;
+        if (p->ai_family == AF_INET)
+        {
+            ipVer = "IPv4";
+        }
+        else if (p->ai_family == AF_INET6)
+        {
+            ipVer = "IPv6";
+        }
+        else
+        {
+            //Unsupported protocol
+            ipVer = "UNK?";
         }
 
-        // if address is ipv6 address
-        else {
-            ipVer              = "IPv6";
-            sockaddr_in6 *ipv6 = reinterpret_cast<sockaddr_in6 *>(p->ai_addr);
-            addr               = &(ipv6->sin6_addr);
-            ++numOfAddr;
-        }
+        numOfAddr++;
 
         // convert IPv4 and IPv6 addresses from binary to text form
-        inet_ntop(p->ai_family, addr, ipStr, sizeof(ipStr));
-        std::cout << "(" << numOfAddr << ") " << ipVer << " : " << ipStr
+        std::cout << "(" << numOfAddr << ") " << ipVer << " : " << IpAddressToString(p->ai_addr, p->ai_addrlen)
                   << std::endl;
     }
 
