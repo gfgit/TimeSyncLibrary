@@ -31,46 +31,29 @@ int myCloseSocket(int sockFD)
 
 std::string IpAddressToString(sockaddr *addr, int addr_len)
 {
-#if (defined(WIN32) || defined(_WIN32))
-    std::string buf(INET6_ADDRSTRLEN, ' ');
-
-    DWORD requiredLength = buf.length();
-    char *bufPtr = &buf.at(0);
-    int err = WSAAddressToStringA(addr, addr_len, nullptr, bufPtr, &requiredLength);
-    if(err == WSAEFAULT)
-    {
-        //Retry with bigger buffer
-        buf.resize(requiredLength, ' ');
-        bufPtr = &buf.at(0);
-        err = WSAAddressToStringA(addr, addr_len, nullptr, bufPtr, &requiredLength);
-    }
-
-    if(err)
-    {
-        std::cerr << "Socket name error" << std::endl;
-    }
-
-    buf.resize(requiredLength);
-    return buf;
-#else
     // ipv6 length makes sure both ipv4/6 addresses can be stored in this variable
-    char ipStr[INET6_ADDRSTRLEN + 6];
+    char ipStr[INET6_ADDRSTRLEN];
 
-    void *addr_ptr;
-    u_short sin_port;
+#if (defined(WIN32) || defined(_WIN32))
+    //Copy and remove port
+    sockaddr_in6 addr_copy;
+    int addr_copy_len = sizeof (sockaddr_in6);
+    memset(&addr_copy, 0, addr_copy_len);
 
-    // if address is ipv4 address
+    if(addr_len < addr_copy_len)
+        addr_copy_len = addr_len;
+
+    memcpy(&addr_copy, addr, addr_copy_len);
+
     if (addr->sa_family == AF_INET)
     {
-        sockaddr_in *ipv4 = reinterpret_cast<sockaddr_in *>(addr);
-        addr_ptr = &(ipv4->sin_addr);
-        sin_port = ipv4->sin_port;
+        /* IPv4 */
+        ((sockaddr_in *)&addr_copy)->sin_port = 0;
     }
-    else if(addr->sa_family == AF_INET6)
+    else if (addr->sa_family == AF_INET6)
     {
-        sockaddr_in6 *ipv6 = reinterpret_cast<sockaddr_in6 *>(addr);
-        addr_ptr = &(ipv6->sin6_addr);
-        sin_port = ipv6->sin6_port;
+        /* IPv6 */
+        ((sockaddr_in6 *)&addr_copy)->sin6_port = 0;
     }
     else
     {
@@ -78,21 +61,36 @@ std::string IpAddressToString(sockaddr *addr, int addr_len)
         return {};
     }
 
-    inet_ntop(addr->sa_family, addr_ptr, ipStr, INET6_ADDRSTRLEN);
-
-    //Append :port
-    int real_port = ntohs(sin_port); //Convert to host byte order
-
-    int len = strlen(ipStr);
-    ipStr[len] = ':';
-    int num_len = snprintf(ipStr + len + 1, 5, "%d", real_port);
-    if(num_len <= 5)
+    DWORD requiredLength = sizeof (ipStr);
+    int err = WSAAddressToStringA((sockaddr *)&addr_copy, addr_copy_len, nullptr, ipStr, &requiredLength);
+    if(err)
     {
-        ipStr[len + 1 + num_len] = '\0';
+        std::cerr << "Socket name error" << std::endl;
+    }
+#else
+    void *addr_ptr;
+
+    // if address is ipv4 address
+    if (addr->sa_family == AF_INET)
+    {
+        sockaddr_in *ipv4 = reinterpret_cast<sockaddr_in *>(addr);
+        addr_ptr = &(ipv4->sin_addr);
+    }
+    else if(addr->sa_family == AF_INET6)
+    {
+        sockaddr_in6 *ipv6 = reinterpret_cast<sockaddr_in6 *>(addr);
+        addr_ptr = &(ipv6->sin6_addr);
+    }
+    else
+    {
+        //Unsupperted
+        return {};
     }
 
-    return std::string(ipStr);
+    inet_ntop(addr->sa_family, addr_ptr, ipStr, sizeof (ipStr));
 #endif
+
+    return std::string(ipStr);
 }
 
 int main(int argc, char *argv[])
