@@ -20,6 +20,14 @@
 #include <unistd.h>    // close()
 #endif
 
+int myCloseSocket(int sockFD)
+{
+#if defined(WIN32) || defined(_WIN32)
+    return closesocket(sockFD);
+#else
+    return close(sockFD);
+#endif
+}
 
 int main(int argc, char *argv[])
 {
@@ -137,11 +145,7 @@ int main(int argc, char *argv[])
         std::cerr << "Error while binding socket\n";
 
         // if some error occurs, make sure to close socket and free resources
-#if defined(WIN32) || defined(_WIN32)
-        closesocket(sockFD);
-#else
-        close(sockFD);
-#endif
+        myCloseSocket(sockFD);
         freeaddrinfo(res);
         return -5;
     }
@@ -153,11 +157,7 @@ int main(int argc, char *argv[])
         std::cerr << "Error while Listening on socket\n";
 
         // if some error occurs, make sure to close socket and free resources
-#if defined(WIN32) || defined(_WIN32)
-        closesocket(sockFD);
-#else
-        close(sockFD);
-#endif
+        myCloseSocket(sockFD);
         freeaddrinfo(res);
         return -6;
     }
@@ -186,18 +186,10 @@ int main(int argc, char *argv[])
 
         // send call sends the data you specify as second param and it's length as 3rd param, also returns how many bytes were actually sent
         auto bytes_sent = send(newFD, response.data(), response.length(), 0);
-#if defined(WIN32) || defined(_WIN32)
-        closesocket(newFD);
-#else
-        close(newFD);
-#endif
+        myCloseSocket(newFD);
     }
 
-#if defined(WIN32) || defined(_WIN32)
-    closesocket(sockFD);
-#else
-    close(sockFD);
-#endif
+    myCloseSocket(sockFD);
 
     freeaddrinfo(res);
 
