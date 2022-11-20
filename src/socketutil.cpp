@@ -103,7 +103,7 @@ int TimeSyncLibrary::Socket::close()
     return rc;
 }
 
-int TimeSyncLibrary::Socket::connectTo(sockaddr *serverAddr, int len)
+int TimeSyncLibrary::Socket::connectTo(sockaddr *serverAddr, size_t len)
 {
     close();
 
@@ -135,7 +135,7 @@ TimeSyncLibrary::Server::~Server()
     close();
 }
 
-int TimeSyncLibrary::Server::listen(sockaddr *serverAddr, int len, int backLog)
+int TimeSyncLibrary::Server::listen(sockaddr *serverAddr, size_t len, int backLog)
 {
     close();
 
@@ -146,4 +146,11 @@ int TimeSyncLibrary::Server::listen(sockaddr *serverAddr, int len, int backLog)
     ::bind(sockFd, serverAddr, len);
 
     return ::listen(sockFd, backLog);
+}
+
+int TimeSyncLibrary::Server::accept(Socket& mySock, sockaddr* clientAddr, int* addrLen)
+{
+    mySock.close();
+    mySock.sockFd = ::accept(this->sockFd, clientAddr, addrLen);
+    return mySock.sockFd;
 }

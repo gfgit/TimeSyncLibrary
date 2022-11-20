@@ -14,40 +14,53 @@
 
 namespace TimeSyncLibrary{
     
-    
+    /*!
+    Classe che realizza la connessione del client
+    */
     class Socket
     {
     public:
         Socket();
+
+        Socket(const Socket&) = delete;
+        Socket& operator=(const Socket&) = delete;
+
         virtual ~Socket();
 
         int close();
-        int connectTo(sockaddr *serverAddr, int len);
 
+        /*! crea e connette socket all'indirizzo specificato, len indica ipv4,ipv6 (quanti byte è lungo sockaddr)*/
+        int connectTo(sockaddr *serverAddr, size_t len);
+
+        /*! legge un buffer lungo len */
         int read(char *buf, int len);
         int write(const char *buf, int len);
 
     protected:
+        friend class Server;
+        /*! descrittore del socket (id del socket)*/
         int sockFd;
     };
 
+    /*!
+    Classe che realizza un server
+    */
     class Server: public Socket
     {
     public:
         Server();
         virtual ~Server();
 
-        int listen(sockaddr *serverAddr, int len, int backLog);
+        /*! crea socket e si mette in ascolto*/
+        int listen(sockaddr *serverAddr, size_t len, int backLog);
+        int accept(Socket& mySock, sockaddr* clientAddr, int* addrLen);
     };
 
+    /*! converte l'indirizzo in byte del sockaddr in una stringa leggibile*/
     std::string IpAddressToString(sockaddr *addr, int addr_len);
 
 
 }
-
-
-
-
 
 
 

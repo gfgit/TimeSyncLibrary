@@ -11,8 +11,12 @@ set(PROGRAM_SOURCES
     src/socketutil.h
     src/socketutil.cpp)
 
+
+
 add_executable(TimeSyncLibrary
     ${PROGRAM_SOURCES})
+
+target_include_directories(TimeSyncLibrary PRIVATE src)
 
 if(WIN32)
 target_link_libraries(TimeSyncLibrary
