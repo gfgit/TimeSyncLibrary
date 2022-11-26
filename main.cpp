@@ -21,6 +21,8 @@
 
 #include "src/socketutil.h"
 
+using namespace std;
+
 int main(int argc, char *argv[])
 {
 #if defined(WIN32) || defined(_WIN32)
@@ -129,21 +131,27 @@ int main(int argc, char *argv[])
     TimeSyncLibrary::Server myServer;
 
     // start server
-    if (myServer.listen(p->ai_addr, p->ai_addrlen, backLog) < 0) 
+    if (myServer.listen(p->ai_addr, p->ai_addrlen, backLog) < 0)
     {
         std::cerr << "Error while binding socket\n";
         // if some error occurs, make sure to close socket and free resources
         freeaddrinfo(res);
         return -5;
     }
+//    uncomment to use ipv4
+//    struct sockaddr_in loopback;
+//    /*Convert port number to integer*/
+//    loopback.sin_family = AF_INET;       /* Internet domain */
+//    loopback.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+//    loopback.sin_port = ((sockaddr_in*)p->ai_addr)->sin_port;
 
-    struct sockaddr_in loopback;
-    /*Convert port number to integer*/        
-    loopback.sin_family = AF_INET;       /* Internet domain */
-    loopback.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
-    loopback.sin_port=((sockaddr_in*)p->ai_addr)->sin_port;
+    struct sockaddr_in6 loopback6 = IN6ADDR_LOOPBACK_INIT;
+    /*Convert port number to integer*/
+    loopback6.sin6_family = AF_INET6;       /* Internet domain */
+    loopback6.sin6_addr = in6addr_loopback;
+    loopback6.sin6_port = ((sockaddr_in*)p->ai_addr)->sin_port;
 
-    if (mySock.connectTo((sockaddr*)&loopback, sizeof(loopback)) < 0) 
+    if (mySock.connectTo((sockaddr*)&loopback6, sizeof(loopback6)) < 0)
     {
         std::cerr << "Error while creating socket\n";
         freeaddrinfo(res);
@@ -176,7 +184,14 @@ int main(int argc, char *argv[])
         // send call sends the data you specify as second param and it's length as 3rd param, also returns how many bytes were actually sent
         
         auto bytes_sent = clientSock.write(response.data(), (int)response.length());
+        cout << bytes_sent << endl;
+        break;
     }
+
+    char buff[50] = {0};
+    int bytes_read = mySock.read(buff,50);
+
+    cout << bytes_read << " " << buff << endl;
 
     freeaddrinfo(res);
 
