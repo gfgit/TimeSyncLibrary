@@ -150,12 +150,6 @@ int main(int argc, char *argv[])
         return -4;
     }
 
-
-
-
-
-
-
     // structure large enough to hold client's address
     sockaddr_storage client_addr;
     int client_addr_size = sizeof(client_addr);
@@ -172,7 +166,8 @@ int main(int argc, char *argv[])
         // accept call will give us a new socket descriptor
         TimeSyncLibrary::Socket clientSock;
 
-        if (myServer.accept(clientSock,(sockaddr*) &client_addr, &client_addr_size)) 
+        // <= 0 beacuse linux returns -1 on error, windows returns 0
+        if (myServer.accept(clientSock,(sockaddr*) &client_addr, &client_addr_size) <= 0)
         {
             std::cerr << "Error while Accepting on socket\n";
             continue;
