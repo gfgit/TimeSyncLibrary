@@ -64,7 +64,17 @@ int main(int argc, char *argv[])
             }
             else if(strcmp(argv[i], "--port") == 0)
             {
-                portStr = argv[i];
+                if(argc > i + 1)
+                {
+                    //Store port
+                    i++;
+                    portStr = argv[i];
+                }
+                else
+                {
+                    printHelp = true;
+                    break;
+                }
             }
         }
 
