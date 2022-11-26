@@ -106,6 +106,28 @@ int main(int argc, char *argv[])
             return 2;
         }
 
+        char host[256];
+        struct hostent *host_info;
+        char *IP;
+        if(gethostname(host, sizeof(host)) == -1)
+        {
+            cout << "Error getting host name" << endl;
+        }
+
+        host_info = gethostbyname(host);
+        if(host_info == nullptr)
+        {
+            cout << "Error getting host name" << endl;
+        }
+        int i = 0;
+        while(host_info->h_addr_list[i] != nullptr)
+        {
+            IP = inet_ntoa(*(in_addr*)host_info->h_addr_list[i]);
+            cout << "Server started on : " << IP << " Port : " << ntohs(portNum) << endl;
+            i++;
+        }
+
+
         while(true)
         {
             // structure large enough to hold client's address
@@ -120,8 +142,8 @@ int main(int argc, char *argv[])
                 std::cerr << "Error while Accepting on socket\n";
                 continue;
             }
-
-            // send call sends the data you specify as second param and it's length as 3rd param, also returns how many bytes were actually sent
+            IP = inet_ntoa(((sockaddr_in*)&client_addr)->sin_addr);
+            cout << "Request accepted " << IP << endl;
 
             std::string response = "Hello World!";
             auto bytes_sent = clientSock.write(response.data(), (int)response.length());
